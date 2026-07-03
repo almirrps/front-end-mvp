@@ -108,6 +108,7 @@ input:disabled, select:disabled {
 .btn-warning { background-color: #ffc107; color: #212529; }
 .btn-info { background-color: #17a2b8; color: white; }
 .btn-danger { background-color: #dc3545; color: white; }
+.btn-cancel { background-color: #5E6154; color: white; }
 
 .table-container {
     margin-top: 20px;
