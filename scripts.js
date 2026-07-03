@@ -90,7 +90,6 @@ btnBuscarCliente.addEventListener('click', async () => {
             if (!clienteSelecionado.enderecos) clienteSelecionado.enderecos = [];
 
             // Preenche os campos do formulário
-            //idCliente.value = cliente.idCliente; 
             document.getElementById('nome').value = cliente.nome;
             document.getElementById('sexo').value = cliente.sexo;
             cpfInput.value = cliente.cpf;
@@ -151,7 +150,7 @@ btnCadastrarCliente.addEventListener('click', async () => {
 
 });
 
-// Atualizar Dados do Cliente
+// Atualizar Dados do Cliente (PUT)
 btnAtualizarCliente.addEventListener('click', async () => {
     const nome = document.getElementById('nome').value;
     const cpf = cpfInput.value;
@@ -200,8 +199,7 @@ btnAtualizarCliente.addEventListener('click', async () => {
     }
 });
 
-
-//Cancela insercao e atualizacao de cadastro de cliente
+//Cancela atualizacao de cadastro de cliente
 btnCancelarCliente.addEventListener('click', async () => {
     // Habilita os botoes e renderiza enderecos
     btnCadastrarCliente.disabled = false;
@@ -227,7 +225,14 @@ btnDeletarCliente.addEventListener('click', async () => {
 
             if (response.ok) {
                 alert('Cliente removido com sucesso da API.');
+
+                btnCadastrarCliente.disabled = false;
+                btnAtualizarCliente.disabled = true;
+                btnDeletarCliente.disabled = true;
+                btnCancelarCliente.disabled = true;
                 limparFormularioCliente();
+                toggleInputsEndereco(true);
+                limparFormularioEndereco();
             } else {
                 alert('Erro ao remover o cliente da base da API.');
             }
@@ -404,14 +409,48 @@ btnAtualizarEndereco.addEventListener('click', async () => {
     }
 });
 
-btnDeletarEndereco.addEventListener('click', () => {
-    if (!clienteSelecionado || enderecoSelecionadoIndex === null) return;
-    clienteSelecionado.enderecos.splice(enderecoSelecionadoIndex, 1);
-    limparFormularioEndereco();
-    renderizarEnderecos();
+// Deletar Endereco (DELETE via Query Parameter de Id)
+btnDeletarEndereco.addEventListener('click', async () => {
+
+    if (!clienteSelecionado || enderecoSelecionadoIndex === null) {
+        alert('Nenhum registro foi selecionado.');
+        return;
+    }
+  
+    const idEndereco = document.getElementById('enderecoId').value;
+
+    if (!idEndereco) {
+        alert('Informação IdEndereco não foi informado.');
+        return;
+    }
+
+    if (confirm('Tem certeza que deseja excluir o endereço selecionado?')) {
+
+        try {
+            const response = await fetch(`${API_URL}/endereco?id=${idEndereco}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                alert('Endereço deletado com sucesso na API!');
+
+                btnCancelarEndereco.disabled = true;
+                clienteSelecionado.enderecos.splice(enderecoSelecionadoIndex, 1);
+                limparFormularioEndereco();
+                renderizarEnderecos();
+            } else {
+                const erro = await response.json().catch(() => ({}));
+                alert(`Erro ao deletar endereço: ${erro.mensagem || response.statusText}`);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Erro de conexão com o servidor da API.');
+        }
+    }
+  
 });
 
-//Cancela insercao e atualizacao de cadastro de endereco
+//Cancela atualizacao de cadastro de endereco
 btnCancelarEndereco.addEventListener('click', async () => {
     // Habilita os botões e renderiza endereços
     limparFormularioEndereco();
