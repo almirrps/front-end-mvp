@@ -24,6 +24,12 @@ const btnDeletarEndereco = document.getElementById('btnDeletarEndereco');
 const btnCancelarEndereco = document.getElementById('btnCancelarEndereco');
 const tabelaEnderecosBody = document.querySelector('#tabelaEnderecos tbody');
 
+// Elementos do DOM - Segunda Tela (Modal)
+const btnBuscarListaCliente = document.getElementById('btnBuscarListaCliente');
+const modalListaClientes = document.getElementById('modalListaClientes');
+const btnFecharModal = document.getElementById('btnFecharModal');
+const tabelaListaGeralBody = document.querySelector('#tabelaListaGeral tbody');
+
 // --- Máscara e Formatação do CPF ---
 cpfInput.addEventListener('input', (e) => {
     let value = e.target.value.replace(/\D/g, '');
@@ -63,9 +69,74 @@ function toggleInputsEndereco(habilitar) {
     btnCadastrarEndereco.disabled = !habilitar;
 }
 
-// Buscar Cliente por Nome Específico (GET com parâmetro na URL)
-btnBuscarCliente.addEventListener('click', async () => {
-    const nomeBusca = prompt('Digite o nome do cliente que deseja buscar:');
+// --- FUNÇÃO PARA INJETAR CLIENTE SELECIONADO NA TELA PRINCIPAL ---
+function carregarClienteNaTelaPrincipal(cliente) {
+    clienteSelecionado = cliente;
+    if (!clienteSelecionado.enderecos) clienteSelecionado.enderecos = [];
+
+    document.getElementById('nome').value = cliente.nome;
+    document.getElementById('sexo').value = cliente.sexo;
+    cpfInput.value = cliente.cpf;
+    document.getElementById('idade').value = cliente.idade;
+
+    btnEditarCliente.disabled = false;
+    btnDeletarCliente.disabled = false;
+    toggleInputsEndereco(true);
+    limparFormularioEndereco();
+    renderizarEnderecos();
+}
+
+// --- SEGUNDA TELA: CONTROLE E REQUISIÇÃO ---
+
+// Abrir Segunda Tela e carregar lista total da API
+btnBuscarListaCliente.addEventListener('click', async () => {
+    tabelaListaGeralBody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Carregando lista de clientes...</td></tr>`;
+    modalListaClientes.classList.add('active');
+
+    try {
+        const response = await fetch(`${API_URL}/clientes`);
+        if (!response.ok) throw new Error('Falha ao obter dados.');
+
+        const listaClientes = await response.json();
+        tabelaListaGeralBody.innerHTML = '';
+
+        if (listaClientes.length === 0) {
+            tabelaListaGeralBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#999;">Nenhum cliente cadastrado no sistema.</td></tr>`;
+            return;
+        }
+
+        // Renderiza as linhas na ordem exata solicitada: Nome, CPF, Idade
+        listaClientes.forEach(cliente => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${cliente.nome}</td>
+                <td>${cliente.cpf || 'Não informado'}</td>
+                <td>${cliente.idade} anos</td>
+            `;
+
+            // FUNCIONALIDADE PRINCIPAL: Duplo clique (dblclick) seleciona, fecha a tela e carrega dados
+            tr.addEventListener('dblclick', () => {
+                carregarClienteNaTelaPrincipal(cliente);
+                modalListaClientes.classList.remove('active'); // Fecha a segunda tela
+            });
+
+            tabelaListaGeralBody.appendChild(tr);
+        });
+
+    } catch (error) {
+        console.error(error);
+        tabelaListaGeralBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red;">Erro ao conectar com a API.</td></tr>`;
+    }
+});
+
+// Fechar segunda tela manualmente pelo botão X
+btnFecharModal.addEventListener('click', () => {
+    modalListaClientes.classList.remove('active');
+});
+
+// --- Funcao de busca de cliente (Reaproveitável) ---
+async function executarBuscaPorNome(nomeBusca) {
+
     if (!nomeBusca) return;
 
     try {
@@ -110,6 +181,13 @@ btnBuscarCliente.addEventListener('click', async () => {
         console.error(error);
         alert(error.message || 'Erro ao buscar clientes na API.');
     }
+};
+
+// Buscar Cliente por Nome Específico (GET com parâmetro na URL)
+btnBuscarCliente.addEventListener('click', async () => {
+    const nomeCliente = prompt('Digite o nome exato do cliente que deseja buscar:');
+    
+    executarBuscaPorNome(nomeCliente);
 });
 
 // Cadastrar Cliente (POST)
@@ -460,44 +538,62 @@ btnCancelarEndereco.addEventListener('click', async () => {
     btnCancelarEndereco.disabled = true;
 });
 
-// Buscar Lista de Clientes (GET na lista geral)
 btnBuscarListaCliente.addEventListener('click', async () => {
-    const nomeBusca = prompt('Digite o nome exato do cliente que deseja buscar:');
-    if (!nomeBusca) return;
+    tabelaListaGeralBody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Carregando dados da API...</td></tr>`;
+    modalListaClientes.classList.add('active');
 
     try {
         const response = await fetch(`${API_URL}/clientes`);
         if (!response.ok) throw new Error('Não foi possível obter a lista de clientes.');
 
-        const listaClientes = await response.json();
+        // 1. Pegamos o conteúdo bruto como texto primeiro para inspecionar
+        const textoBruto = await response.text();
         
-        // Localiza o cliente pelo nome dentro do array retornado pela API
-        const cliente = listaClientes.find(c => c.nome.toLowerCase() === nomeBusca.trim().toLowerCase());
-
-        if (cliente) {
-            clienteSelecionado = cliente;
-            // Garante que a estrutura interna de endereços exista caso a API não traga o campo
-            if (!clienteSelecionado.enderecos) clienteSelecionado.enderecos = [];
-
-            document.getElementById('nome').value = cliente.nome;
-            document.getElementById('sexo').value = cliente.sexo;
-            cpfInput.value = cliente.cpf;
-            document.getElementById('idade').value = cliente.idade;
-
-            btnCadastrarCliente.disabled = true;
-            btnAtualizarCliente.disabled = true;
-            btnDeletarCliente.disabled = true;
-            btnCancelarCliente.disabled = true;
-            toggleInputsEndereco(true);
-            limparFormularioEndereco();
-            renderizarEnderecos();
-            
-            alert(`Cliente ${cliente.nome} selecionado com sucesso!`);
-        } else {
-            alert('Cliente não encontrado na base de dados da API.');
+        let listaClientes;
+        try {
+            // 2. Tentamos converter para JSON de forma segura
+            listaClientes = JSON.parse(textoBruto);
+        } catch (err) {
+            // Se falhar, significa que a API mandou texto/HTML em vez de JSON
+            console.error("O backend não retornou um JSON válido. Retornou:", textoBruto);
+            tabelaListaGeralBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#dc3545;">Erro: O servidor não respondeu em formato JSON.</td></tr>`;
+            return;
         }
+
+        // 3. Ajuste de Estrutura: Se a API retornou um objeto que envelopa a lista (ex: { clientes: [...] })
+        if (listaClientes && !Array.isArray(listaClientes) && listaClientes.clientes) {
+            listaClientes = listaClientes.clientes;
+        }
+
+        tabelaListaGeralBody.innerHTML = '';
+
+        if (!listaClientes || listaClientes.length === 0) {
+            tabelaListaGeralBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#999;">Nenhum cliente cadastrado na base.</td></tr>`;
+            return;
+        }
+
+        // 4. Renderização das linhas
+        listaClientes.forEach(cliente => {
+            const tr = document.createElement('tr');
+            
+            tr.innerHTML = `
+                <td>${cliente.nome}</td>
+                <td>${cliente.cpf || 'Não informado'}</td>
+                <td>${cliente.idade} anos</td>
+            `;
+
+            tr.addEventListener('dblclick', async () => {
+                modalListaClientes.classList.remove('active');
+
+                // Executando o fluxo de busca
+                await executarBuscaPorNome(cliente.nome);
+            });
+
+            tabelaListaGeralBody.appendChild(tr);
+        });
+
     } catch (error) {
-        console.error(error);
-        alert('Erro ao buscar clientes na API.');
+        console.error("Erro na requisição FETCH:", error);
+        tabelaListaGeralBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#dc3545; font-weight:600;">Erro de conexão ou CORS com o servidor da API.</td></tr>`;
     }
 });

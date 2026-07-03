@@ -39,6 +39,7 @@
                 </div>
 
                 <div class="actions-bar">
+                    <button type="button" id="btnBuscarListaCliente" class="btn btn-primary">Listar Clientes</button>
                     <button type="button" id="btnBuscarCliente" class="btn btn-info">Buscar Cliente</button>
                     <button type="button" id="btnCadastrarCliente" class="btn btn-success">Cadastrar Cliente</button>
                     <button type="button" id="btnAtualizarCliente" class="btn btn-warning" disabled>Atualizar Cliente</button>
@@ -100,6 +101,32 @@
                 </table>
             </div>
         </main>
+    </div>
+
+    <!-- SEGUNDA TELA: Listagem Geral de Clientes -->
+    <div id="modalListaClientes" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Lista Geral de Clientes</h2>
+                <button type="button" id="btnFecharModal" class="btn-close">&times;</button>
+            </div>
+            <p class="modal-instruction">Dê um <strong>duplo clique (2x)</strong> sobre o cliente para carregá-lo na tela principal.</p>
+            
+            <div class="table-container">
+                <table id="tabelaListaGeral">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>CPF</th>
+                            <th>Idade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Inserido dinamicamente via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script src="scripts.js"></script>
