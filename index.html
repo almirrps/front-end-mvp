@@ -55,6 +55,16 @@
 
                 <input type="hidden" id="enderecoId"> <!--Campo invisivel para armazenar o ID do endereco selecionado-->
                 
+                <!-- NOVO: Linha com o campo CEP -->
+                <div class="form-row">
+                    <div class="input-group" style="display: flex; flex-direction: column; width: 100%;">
+                        <label for="cep">CEP</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="cep" maxlength="9" placeholder="00000-000" disabled>
+                            <button type="button" id="btnBuscarCep" class="btn btn-info" disabled style="white-space: nowrap;">Buscar CEP</button>
+                        </div>
+                    </div>
+                </div>
                 <div class="form-row">
                     <div class="input-group double-width">
                         <label for="logradouro">Logradouro</label>
@@ -83,12 +93,12 @@
                     <button type="button" id="btnCancelarEndereco" class="btn btn-cancel" disabled>Cancelar</button>
                 </div>
             </form>
-
             <!-- Lista para apresentar endereços cadastrados para o cliente selecionado -->
             <div class="table-container">
                 <table id="tabelaEnderecos">
                     <thead>
                         <tr>
+                            <th>CEP</th>
                             <th>Logradouro</th>
                             <th>Bairro</th>
                             <th>Cidade</th>

@@ -18,11 +18,17 @@ const btnCancelarCliente = document.getElementById('btnCancelarCliente');
 const enderecoId = document.getElementById('enderecoId');
 const enderecoForm = document.getElementById('enderecoForm');
 const inputsEndereco = enderecoForm.querySelectorAll('input');
+const btnBuscarCep = document.getElementById('btnBuscarCep');
 const btnCadastrarEndereco = document.getElementById('btnCadastrarEndereco');
 const btnAtualizarEndereco = document.getElementById('btnAtualizarEndereco');
 const btnDeletarEndereco = document.getElementById('btnDeletarEndereco');
 const btnCancelarEndereco = document.getElementById('btnCancelarEndereco');
 const tabelaEnderecosBody = document.querySelector('#tabelaEnderecos tbody');
+const cepInput = document.getElementById('cep'); 
+const logradouroInput = document.getElementById('logradouro');
+const bairroInput = document.getElementById('bairro');
+const cidadeInput = document.getElementById('cidade');
+const estadoInput = document.getElementById('estado');
 
 // Elementos do DOM - Segunda Tela (Modal)
 const btnBuscarListaCliente = document.getElementById('btnBuscarListaCliente');
@@ -42,12 +48,82 @@ cpfInput.addEventListener('input', (e) => {
     e.target.value = value;
 });
 
+// --- Máscara do CEP ---
+cepInput.addEventListener('input', (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 8) value = value.slice(0, 8);
+    
+    if (value.length > 5) {
+        value = value.replace(/^(\d{5})(\d)/, '\$1-\$2');
+    }
+    e.target.value = value;
+});
+
+cepInput.addEventListener('blur', (e) => {
+    const cep = e.target.value.replace(/\D/g, '');
+    if (cep.length === 8) {
+        executarBuscaPorCep(e.target.value);
+    }
+});
+
+// Evento de clique no botão Buscar CEP
+btnBuscarCep.addEventListener('click', () => {
+    const cep = cepInput.value.replace(/\D/g, '');
+    
+    if (cep.length !== 8) {
+        alert('Por favor, digite um CEP válido com 8 dígitos.');
+        return;
+    }
+    
+    executarBuscaPorCep(cep);
+});
+
+async function executarBuscaPorCep(cep) {
+    // Feedback visual temporário de carregamento nos inputs
+    logradouroInput.value = 'Buscando...';
+    bairroInput.value = 'Buscando...';
+    cidadeInput.value = 'Buscando...';
+    estadoInput.value = '...';
+
+    try {
+        const response = await fetch(`https://viacep.com.br/ws/`+cep+`/json/`);
+        if (!response.ok) throw new Error();
+
+        const dados = await response.json();
+
+        if (dados.erro) {
+            alert('CEP não encontrado na base do ViaCEP.');
+            limparCamposEnderecoApenas();
+            return;
+        }
+
+        // Auto-completa os inputs com os dados retornados
+        logradouroInput.value = dados.logradouro || '';
+        bairroInput.value = dados.bairro || '';
+        cidadeInput.value = dados.localidade || '';
+        estadoInput.value = dados.uf || '';
+
+    } catch (error) {
+        console.error('Erro ao conectar com a API ViaCEP:', error);
+        alert('Não foi possível obter os dados do CEP. Digite o endereço manualmente.');
+        limparCamposEnderecoApenas();
+    }
+}
+
+function limparCamposEnderecoApenas() {
+    inputsEndereco.forEach(input => {
+        if(input.id !== 'enderecoId') input.value = '';
+    });
+}
+
 // --- Funções Auxiliares da Tela ---
 function limparFormularioCliente() {
     clienteForm.reset();
     clienteSelecionado = null;
+
     btnAtualizarCliente.disabled = true;
     btnDeletarCliente.disabled = true;
+
     toggleInputsEndereco(false);
     limparFormularioEndereco();
     renderizarEnderecos();
@@ -67,6 +143,7 @@ function limparFormularioEndereco() {
 function toggleInputsEndereco(habilitar) {
     inputsEndereco.forEach(input => input.disabled = !habilitar);
     btnCadastrarEndereco.disabled = !habilitar;
+    btnBuscarCep.disabled = !habilitar; // Habilita ou desabilita o botão de busca junto com os campos
 }
 
 // --- FUNÇÃO PARA INJETAR CLIENTE SELECIONADO NA TELA PRINCIPAL ---
@@ -339,6 +416,7 @@ function renderizarEnderecos() {
         }
 
         tr.innerHTML = `
+            <td>${end.cep}</td>
             <td>${end.logradouro}</td>
             <td>${end.bairro}</td>
             <td>${end.cidade}</td>
@@ -356,6 +434,7 @@ function selecionarEndereco(index, endereco) {
     enderecoSelecionadoIndex = index;
     enderecoId.value = endereco.id || ''; 
     document.getElementById('enderecoId').value;
+    document.getElementById('cep').value = endereco.cep;
     document.getElementById('logradouro').value = endereco.logradouro;
     document.getElementById('bairro').value = endereco.bairro;
     document.getElementById('cidade').value = endereco.cidade;
@@ -376,18 +455,20 @@ btnCadastrarEndereco.addEventListener('click', async () => {
         return;
     }
 
+    const cep = document.getElementById('cep').value;
     const logradouro = document.getElementById('logradouro').value;
     const bairro = document.getElementById('bairro').value;
     const cidade = document.getElementById('cidade').value;
     const estado = document.getElementById('estado').value;
 
-    if (!logradouro || !bairro || !cidade || !estado) {
+    if (!cep || !logradouro || !bairro || !cidade || !estado) {
         alert('Preencha todos os campos do endereço.');
         return;
     }
 
     // Capturando valores
     const formData = new FormData();
+    formData.append('cep', cep);
     formData.append('logradouro', logradouro);
     formData.append('bairro', bairro);
     formData.append('cidade', cidade);
@@ -436,12 +517,13 @@ btnAtualizarEndereco.addEventListener('click', async () => {
     }
 
     const idEndereco = document.getElementById('enderecoId').value;
+    const cep = document.getElementById('cep').value;
     const logradouro = document.getElementById('logradouro').value;
     const bairro = document.getElementById('bairro').value;
     const cidade = document.getElementById('cidade').value;
     const estado = document.getElementById('estado').value;
 
-    if (!idEndereco || !logradouro || !bairro || !cidade || !estado) {
+    if (!idEndereco || !cep || !logradouro || !bairro || !cidade || !estado) {
         alert('Os campos não podem ficar vazios.');
         return;
     }
@@ -449,6 +531,7 @@ btnAtualizarEndereco.addEventListener('click', async () => {
     // Capturando valores
     const formData = new FormData();
     formData.append('id', idEndereco);
+    formData.append('cep', cep);
     formData.append('logradouro', logradouro);
     formData.append('bairro', bairro);
     formData.append('cidade', cidade);
