@@ -1,5 +1,5 @@
 // Configuração do Endpoint da API
-const API_URL = 'http://127.0.0.1:5000';
+const API_URL = 'http://localhost:4000';
 
 // Estado da Aplicação
 let clienteSelecionado = null;
@@ -404,6 +404,7 @@ function renderizarEnderecos() {
     
     if (!clienteSelecionado || !clienteSelecionado.enderecos || clienteSelecionado.enderecos.length === 0) {
         tabelaEnderecosBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999;">Nenhum endereço cadastrado para este cliente.</td></tr>`;
+        btnCadastrarEndereco.disabled = false;
         return;
     }
 
