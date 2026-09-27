@@ -34,27 +34,40 @@ As principais ferramentas e bibliotecas usadas no desenvolvimento:
 ------------------------------
 ## 📋 Pré-requisitos
 
-Antes de começar, certifique-se de ter o seguinte projeto sendo executado em sua máquina:
-* [BACK-END-MVP] (https://github.com/almirrps/back-end-mvp)
+Antes de começar, certifique-se de:
+- Estar com o Docker devidamente instalado e em execução em sua máquina.
+- Ter a aplicação [BACK-END-MVP] (https://github.com/almirrps/back-end-mvp) e a aplicação
+[FRONT-END-MVP] (https://github.com/almirrps/front-end-mvp) baixadas dentro de uma pasta
+em comum. ex.: projetos_mvp
+- Mova o arquivo docker-compose.yml existente na pasta raiz do projeto front-end-mvp para a pasta
+em comum onde os dois projetos foram baixados.
 ------------------------------
 ## 🔧 Instalação
 
 Siga os passos abaixo para configurar o ambiente de desenvolvimento:
 
-   1. Clone o repositório: 
+   1. Clone os repositórios: 
+
+git clone https://github.com/almirrps/back-end-mvp.git
 
 git clone https://github.com/almirrps/front-end-mvp.git
+
+   2. Coloque-os dentro de uma pasta comum:
+Crie uma pasta projetos_mvp, por exemplo e copie os dois projetos para dentro dela
+
+   3. Mova o arquivo docker-compose.yml existente na pasta raiz do projeto front-end-mvp para dentro da pasta em comum onde os projetos foram armazenados. 
 
 obs.: não é necessário qualquer tipo de instalação 
 ------------------------------
 ## 🚀 Como Executar
 
-   1. Entre na pasta do projeto pelo explorer:
+   1. Por meio do terminal, entre na pasta comum dos dois projetos:
 
-front-end-mvp
+ex.: cd projetos_mvp
 
 
-   2. Execute o arquivo index.html pelo seu navegador
+   2. Ainda no terminal, execute o comando abaixo:
+docker compose up --build
 ------------------------------
 ## 🤝 Como Contribuir
 
