@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  # Serviço do Back-end Python
+  backend:
+    build:
+      context: ./back-end-mvp
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+
+  # Serviço do Front-end
+  frontend:
+    build:
+      context: ./front-end-mvp
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
